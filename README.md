@@ -6,19 +6,33 @@ valid/invalid/summary outputs.
 
 ## How to run
 
-1. Install dependencies:
+1. (Optional but recommended) Create and activate a virtual environment,
+   so this project's dependencies stay isolated from other Python projects
+   on your machine:
+   ```
+   python -m venv .venv
+   ```
+   Activate it — on Windows PowerShell:
+   ```
+   .venv\Scripts\Activate.ps1
+   ```
+   On Mac/Linux:
+   ```
+   source .venv/bin/activate
+   ```
+2. Install dependencies:
    ```
    pip install -r requirements.txt
    ```
-2. Place branch CSV files in the `input/` folder. Files must be named
+3. Place branch CSV files in the `input/` folder. Files must be named
    following the pattern `BR<branch_number>_<date>_TRANSACTION.csv`
    (e.g. `BR001_20260906_TRANSACTION.csv`) and contain the columns:
    `transaction_id, account_id, transaction_date, transaction_type, amount, currency`.
-3. Run:
+4. Run:
    ```
    python pipeline.py
    ```
-4. Results appear in `output/`:
+5. Results appear in `output/`:
    - `valid_transactions.csv` — records that passed every rule.
    - `invalid_transactions.csv` — rejected records with an `error_reason`
      column (multiple reasons for one row are separated by `; `).
@@ -52,6 +66,7 @@ Banking Data Project/
 ├── requirements.txt
 └── README.md
 ```
+
 ## Author
 
 Zoya Haider

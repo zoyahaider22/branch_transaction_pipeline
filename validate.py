@@ -31,12 +31,18 @@ def rule_missing_account_id(df):
 
 
 def rule_invalid_date(df):
-    # errors="coerce" turns anything that doesn't strictly match
-    # YYYY-MM-DD (including "2026/09/06" and the impossible "2026-13-06")
-    # into NaT (Not a Time) instead of guessing — that NaT is our signal
-    # that the date failed.
+    # errors="coerce" turns anything that doesn't parse into a real
+    # calendar date (including the impossible "2026-13-06") into NaT.
     parsed = pd.to_datetime(df["transaction_date"], format="%Y-%m-%d", errors="coerce")
-    fails = parsed.isna()
+
+    # pd.to_datetime alone is lenient about digit padding — it will
+    # happily accept "2026-9-6" as a real date, even though that is
+    # NOT actually in YYYY-MM-DD format (month/day must be 2 digits).
+    # A regex check enforces the exact shape on top of the date check,
+    # so "2026-9-6" is correctly rejected even though it IS a real date.
+    strict_format = df["transaction_date"].astype(str).str.match(r"^\d{4}-\d{2}-\d{2}$")
+
+    fails = parsed.isna() | ~strict_format
     return fails, "transaction_date must be a valid date in YYYY-MM-DD format"
 
 
