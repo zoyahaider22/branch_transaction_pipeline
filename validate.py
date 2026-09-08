@@ -11,7 +11,7 @@ if/else block) means:
 - every rule can be tested/read in isolation
 - adding, removing or tweaking one rule never risks breaking another
 - ALL rules run against every row, so a row breaking two rules gets
-  both reasons recorded (see combine_errors below)
+  both reasons recorded (see validate_all below)
 """
 
 import pandas as pd

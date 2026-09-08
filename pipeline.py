@@ -2,7 +2,8 @@
 pipeline.py — orchestrates the full Extract -> Transform/Validate -> Load
 flow for the branch transaction pipeline.
 
-Run it with:
+See README.md for full setup (virtual environment, installing
+dependencies). Once dependencies are installed, run this file with:
     python pipeline.py
 
 It expects branch CSV files in ./input/ and writes results to ./output/.
