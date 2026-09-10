@@ -54,6 +54,28 @@ code changes.
 - `transaction_id` must be unique across all branch files combined; every
   occurrence of a duplicated ID is treated as invalid.
 
+## File-level vs Row-level Errors
+
+The pipeline distinguishes between file-level/schema errors and
+row-level validation errors.
+
+File-level errors:
+- Missing required columns
+- The affected file is skipped and the error is reported in the
+  pipeline summary.
+
+Row-level errors:
+- Missing transaction_id
+- Missing account_id
+- Invalid transaction_date
+- Invalid transaction_type
+- Invalid amount
+- Invalid currency
+- Duplicate transaction_id
+
+Row-level errors are retained in invalid_transactions.csv with
+their corresponding error_reason. 
+
 ## Project structure
 
 ```
