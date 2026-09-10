@@ -19,7 +19,7 @@ INPUT_FOLDER = "input"
 OUTPUT_FOLDER = "output"
 
 
-def load_outputs(validated_df, file_errors, output_folder):
+def load_outputs(validated_df, file_errors, files_read, output_folder):
     """
     The "Load" stage: write the three required output files.
     Re-running the pipeline simply overwrites these each time, so no
@@ -47,13 +47,16 @@ def load_outputs(validated_df, file_errors, output_folder):
         {"metric": "invalid_records", "value": invalid_count},
     ]
 
-    # Extra breakdowns beyond the minimum requirement: per-branch counts
-    # and a count per distinct error reason. These come almost for free
-    # since validate.py already recorded everything we need, and they
-    # make the summary genuinely useful to whoever reads it next.
-    per_branch = validated_df.groupby("source_file").size()
-    for branch_file, count in per_branch.items():
-        summary_rows.append({"metric": f"records_from_{branch_file}", "value": count})
+    # Per-branch counts come from files_read (every file successfully
+    # opened), NOT from grouping the data itself. A header-only file
+    # contributes 0 rows and would be completely invisible to a
+    # groupby — using files_read means a branch that genuinely sent
+    # zero transactions still shows up here, explicitly, as 0 — instead
+    # of looking identical to a branch whose file never arrived at all.
+    for entry in files_read:
+        summary_rows.append(
+            {"metric": f"records_from_{entry['file']}", "value": entry["row_count"]}
+        )
 
     if invalid_count > 0:
         reason_counts = (
@@ -79,8 +82,8 @@ def load_outputs(validated_df, file_errors, output_folder):
 
 def run_pipeline(input_folder=INPUT_FOLDER, output_folder=OUTPUT_FOLDER):
     print(f"Reading branch files from '{input_folder}'...")
-    combined_df, file_errors = extract_all(input_folder)
-    print(f"  -> {len(combined_df)} records read from {combined_df['source_file'].nunique()} file(s).")
+    combined_df, file_errors, files_read = extract_all(input_folder)
+    print(f"  -> {len(combined_df)} records read from {len(files_read)} file(s).")
 
     if file_errors:
         print("  File-level errors encountered:")
@@ -92,14 +95,13 @@ def run_pipeline(input_folder=INPUT_FOLDER, output_folder=OUTPUT_FOLDER):
 
     print(f"Writing outputs to '{output_folder}'...")
     total, valid_count, invalid_count = load_outputs(
-        validated_df, file_errors, output_folder
+        validated_df, file_errors, files_read, output_folder
     )
 
     print("Done.")
     print(f"  Total records:   {total}")
     print(f"  Valid records:   {valid_count}")
     print(f"  Invalid records: {invalid_count}")
-
 
 if __name__ == "__main__":
     run_pipeline()

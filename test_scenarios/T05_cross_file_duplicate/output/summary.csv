@@ -1,0 +1,7 @@
+metric,value
+total_input_records,4
+valid_records,2
+invalid_records,2
+records_from_BR008_20260906_TRANSACTION.csv,2
+records_from_BR009_20260906_TRANSACTION.csv,2
+invalid_reason: duplicate transaction_id across combined branch data,2

@@ -1,0 +1,16 @@
+transaction_id,account_id,transaction_date,transaction_type,amount,currency,source_file,error_reason
+T1003,,2026-09-06,CREDIT,250.00,USD,BR001_20260906_TRANSACTION.csv,account_id is missing
+T1004,A1004,2026-09-06,TRANSFER,100.00,USD,BR001_20260906_TRANSACTION.csv,transaction_type must be CREDIT or DEBIT
+T1005,A1005,2026-09-06,DEBIT,75.00,USD,BR001_20260906_TRANSACTION.csv,duplicate transaction_id across combined branch data
+T1006,A1006,2026-09-06,CREDIT,-50.00,USD,BR001_20260906_TRANSACTION.csv,"amount must be present, numeric, and greater than 0"
+T1008,A1008,2026/09/06,CREDIT,300.00,USD,BR001_20260906_TRANSACTION.csv,transaction_date must be a valid date in YYYY-MM-DD format
+T2002,A2002,2026-09-06,DEBIT,,USD,BR002_20260906_TRANSACTION.csv,"amount must be present, numeric, and greater than 0"
+T2003,A2003,2026-09-06,DEBIT,0.00,USD,BR002_20260906_TRANSACTION.csv,"amount must be present, numeric, and greater than 0"
+T2004,A2004,2026-09-06,CREDIT,150.00,EUR,BR002_20260906_TRANSACTION.csv,currency must be USD
+T1005,A1005,2026-09-06,DEBIT,75.00,USD,BR002_20260906_TRANSACTION.csv,duplicate transaction_id across combined branch data
+T2008,,2026-09-06,PIZZA,80.00,USD,BR002_20260906_TRANSACTION.csv,account_id is missing; transaction_type must be CREDIT or DEBIT
+T3003,A3003,2026-09-06,CASHOUT,90.00,USD,BR003_20260906_TRANSACTION.csv,transaction_type must be CREDIT or DEBIT
+,A3005,2026-09-06,DEBIT,45.00,USD,BR003_20260906_TRANSACTION.csv,transaction_id is missing
+T3006,A3006,2026-09-06,CREDIT,175.00,GBP,BR003_20260906_TRANSACTION.csv,currency must be USD
+T3008,A3008,2026-13-06,CREDIT,500.00,USD,BR003_20260906_TRANSACTION.csv,transaction_date must be a valid date in YYYY-MM-DD format
+T7001,,2026-09-06,PIZZA,-10.00,GBP,BR007_20260906_TRANSACTION.csv,"account_id is missing; transaction_type must be CREDIT or DEBIT; amount must be present, numeric, and greater than 0; currency must be USD"

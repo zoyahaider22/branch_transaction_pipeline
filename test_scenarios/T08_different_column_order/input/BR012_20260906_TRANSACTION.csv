@@ -1,0 +1,3 @@
+currency,amount,transaction_type,transaction_date,account_id,transaction_id
+USD,500.00,CREDIT,2026-09-06,A12001,T12001
+USD,-30.00,DEBIT,2026-09-06,A12002,T12002

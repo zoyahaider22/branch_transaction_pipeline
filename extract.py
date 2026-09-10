@@ -69,9 +69,20 @@ def read_branch_file(file_path):
 def extract_all(input_folder):
     """
     Find and read every branch file, combining the valid ones into a
-    single DataFrame. Also returns a list of any file-level errors
-    (e.g. missing columns, unreadable file) so the pipeline can report
-    them instead of crashing.
+    single DataFrame. Also returns:
+    - file_errors: any file-level errors (missing columns, unreadable file)
+    - files_read: every file successfully read, WITH its row count,
+      even if that count is 0.
+
+    files_read exists specifically because a header-only file (valid
+    structure, zero data rows) contributes nothing to the combined
+    DataFrame's row-based statistics — a plain groupby("source_file")
+    would make that file invisible in reporting, indistinguishable from
+    a file that was never sent at all. Tracking it here means a branch
+    that genuinely sent zero transactions is still visible and
+    accounted for, which matters in a real pipeline: an empty file and
+    a missing file are different situations and should be reported
+    differently.
     """
     files = find_branch_files(input_folder)
 
@@ -83,6 +94,7 @@ def extract_all(input_folder):
 
     all_dataframes = []
     file_errors = []
+    files_read = []
 
     for file_path in files:
         df, error = read_branch_file(file_path)
@@ -90,6 +102,7 @@ def extract_all(input_folder):
             file_errors.append({"file": os.path.basename(file_path), "error": error})
             continue
         all_dataframes.append(df)
+        files_read.append({"file": os.path.basename(file_path), "row_count": len(df)})
 
     if not all_dataframes:
         raise ValueError(
@@ -97,4 +110,4 @@ def extract_all(input_folder):
         )
 
     combined = pd.concat(all_dataframes, ignore_index=True)
-    return combined, file_errors
+    return combined, file_errors, files_read

@@ -1,0 +1,3 @@
+transaction_id,account_id,transaction_date,transaction_type,amount,currency,source_file
+T8002,A8002,2026-09-06,DEBIT,75.00,USD,BR008_20260906_TRANSACTION.csv
+T9002,A9002,2026-09-06,DEBIT,120.00,USD,BR009_20260906_TRANSACTION.csv

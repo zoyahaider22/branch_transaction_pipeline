@@ -54,7 +54,16 @@ def rule_invalid_transaction_type(df):
 def rule_invalid_amount(df):
     # Convert to numeric, forcing anything non-numeric (or blank) to NaN.
     numeric_amount = pd.to_numeric(df["amount"], errors="coerce")
-    fails = numeric_amount.isna() | (numeric_amount <= 0)
+
+    # pd.to_numeric is more lenient than a real bank amount field should
+    # be — it happily accepts scientific notation like "1e10" as a valid
+    # positive number, even though no real transaction amount is ever
+    # written that way. A regex enforces the raw text is actually shaped
+    # like a plain decimal number (digits, optional single decimal
+    # point) before the parsed value is trusted at all.
+    strict_format = df["amount"].astype(str).str.match(r"^\d+(\.\d+)?$")
+
+    fails = numeric_amount.isna() | (numeric_amount <= 0) | ~strict_format
     return fails, "amount must be present, numeric, and greater than 0"
 
 
