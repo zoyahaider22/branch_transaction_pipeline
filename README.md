@@ -318,6 +318,21 @@ The pipeline also handles situations such as:
 - One invalid file among valid files.
 - Missing or unusable input data.
 
+---
+
+## Week 3 Evidence
+
+Sample execution evidence is available in the `output/` folder:
+
+- `DQsummary.csv` — sample data-quality metrics.
+- `pipeline.log` — sample execution log.
+- `invalid_transactions.csv` — rejected records and validation reasons.
+- `valid_transactions.csv` — successfully validated records.
+
+The test scenarios also contain separate input and output folders for validating individual edge cases.
+
+---
+
 ## Automated Testing
 
 The project uses `pytest` for automated testing.
@@ -344,6 +359,21 @@ Total records: 24
 Valid records: 10
 Invalid records: 14
 ```
+## Latest Test Execution
+
+The latest local test execution reported:
+
+```text
+23 tests passed
+```
+
+Command used:
+
+```bash
+py -m pytest -v
+```
+
+---
 
 ## Known Limitations and Future Improvements
 
