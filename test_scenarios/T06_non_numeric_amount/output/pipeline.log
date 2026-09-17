@@ -1,0 +1,10 @@
+2026-09-17 17:44:45,531 - INFO - Pipeline started.
+2026-09-17 17:44:45,531 - INFO - Input folder: test_scenarios\T06_non_numeric_amount\input
+2026-09-17 17:44:45,531 - INFO - Output folder: test_scenarios\T06_non_numeric_amount\output
+2026-09-17 17:44:45,532 - INFO - Starting extraction.
+2026-09-17 17:44:45,579 - INFO - Extraction completed: 27 records read from 4 file(s).
+2026-09-17 17:44:45,579 - INFO - Starting validation.
+2026-09-17 17:44:45,585 - INFO - Validation completed.
+2026-09-17 17:44:45,586 - INFO - Starting output writing.
+2026-09-17 17:44:45,603 - INFO - Output files written successfully.
+2026-09-17 17:44:45,603 - INFO - Pipeline completed successfully. Total: 27, Valid: 10, Invalid: 17
