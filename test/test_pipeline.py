@@ -255,3 +255,88 @@ def test_no_matching_files_is_logged_and_reported(tmp_path):
 
     assert "Extraction failed" in log_content
     assert "No branch transaction files found" in log_content
+
+def test_multiple_errors_are_preserved_for_one_row(tmp_path):
+    """
+    Verify that one transaction violating multiple rules
+    retains all applicable error reasons.
+    """
+
+    csv_content = (
+        "transaction_id,account_id,transaction_date,"
+        "transaction_type,amount,currency\n"
+        "T9501,,2026-02-30,TRANSFER,-10.00,EUR\n"
+    )
+
+    branch_file = tmp_path / "BR995_20260906_TRANSACTION.csv"
+    branch_file.write_text(csv_content)
+
+    combined_df, file_errors, files_read = extract_all(str(tmp_path))
+    result_df = validate_all(combined_df)
+
+    assert len(file_errors) == 0
+    assert len(result_df) == 1
+
+    row = result_df.iloc[0]
+
+    assert not row["is_valid"]
+
+    error_reason = row["error_reason"]
+
+    assert "account_id is missing" in error_reason
+
+    assert (
+    "transaction_date must be a valid date in YYYY-MM-DD format"
+    in error_reason
+    )
+
+    assert "transaction_type must be CREDIT or DEBIT" in error_reason
+
+    assert (
+    "amount must be present, numeric, and greater than 0"
+    in error_reason
+    )
+
+    assert "currency must be USD" in error_reason
+
+def test_cross_file_duplicate_ids_are_invalid(tmp_path):
+    """
+    Verify that duplicate transaction IDs across two branch files
+    are detected using the combined dataset.
+    """
+
+    csv_header = (
+        "transaction_id,account_id,transaction_date,"
+        "transaction_type,amount,currency\n"
+    )
+
+    file_one = tmp_path / "BR996_20260906_TRANSACTION.csv"
+    file_two = tmp_path / "BR997_20260906_TRANSACTION.csv"
+
+    file_one.write_text(
+        csv_header +
+        "T9601,A9601,2026-09-06,CREDIT,100.00,USD\n"
+    )
+
+    file_two.write_text(
+        csv_header +
+        "T9601,A9602,2026-09-06,DEBIT,200.00,USD\n"
+    )
+
+    combined_df, file_errors, files_read = extract_all(str(tmp_path))
+    result_df = validate_all(combined_df)
+
+    assert len(file_errors) == 0
+    assert len(result_df) == 2
+
+    assert result_df["is_valid"].eq(False).all()
+
+    assert result_df["error_reason"].str.contains(
+        "duplicate transaction_id",
+        regex=False
+    ).all()
+
+    assert set(result_df["source_file"]) == {
+        "BR996_20260906_TRANSACTION.csv",
+        "BR997_20260906_TRANSACTION.csv",
+    } 

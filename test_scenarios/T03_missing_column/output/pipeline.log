@@ -1,0 +1,15 @@
+2026-09-17 21:39:44,435 - INFO - Pipeline started.
+2026-09-17 21:39:44,436 - INFO - Input folder: test_scenarios\T03_missing_column\input
+2026-09-17 21:39:44,436 - INFO - Output folder: test_scenarios\T03_missing_column\output
+2026-09-17 21:39:44,436 - INFO - Starting extraction.
+2026-09-17 21:39:44,458 - INFO - Extraction completed: 24 records read from 3 file(s).
+2026-09-17 21:39:44,458 - INFO - File read successfully: BR001_20260906_TRANSACTION.csv with 8 data row(s).
+2026-09-17 21:39:44,458 - INFO - File read successfully: BR002_20260906_TRANSACTION.csv with 8 data row(s).
+2026-09-17 21:39:44,458 - INFO - File read successfully: BR003_20260906_TRANSACTION.csv with 8 data row(s).
+2026-09-17 21:39:44,459 - WARNING - 1 file-level error(s) encountered.
+2026-09-17 21:39:44,460 - WARNING - File rejected: BR006_20260906_TRANSACTION.csv - Missing required column(s): currency
+2026-09-17 21:39:44,460 - INFO - Starting validation.
+2026-09-17 21:39:44,473 - INFO - Validation completed.
+2026-09-17 21:39:44,475 - INFO - Starting output writing.
+2026-09-17 21:39:44,501 - INFO - Output files written successfully.
+2026-09-17 21:39:44,504 - INFO - Pipeline completed successfully. Total: 24, Valid: 10, Invalid: 14

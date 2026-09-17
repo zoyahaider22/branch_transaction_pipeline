@@ -159,6 +159,17 @@ def run_pipeline(input_folder=INPUT_FOLDER, output_folder=OUTPUT_FOLDER):
         f"Extraction completed: {len(combined_df)} records "
         f"read from {len(files_read)} file(s)."
     )
+    # Log successfully read files and detect empty files
+    for entry in files_read:
+        logger.info(
+            f"File read successfully: {entry['file']} "
+            f"with {entry['row_count']} data row(s)."
+        )
+
+        if entry["row_count"] == 0:
+            logger.warning(
+                f"Empty branch file detected: {entry['file']}"
+            )
 
     print(
         f"  -> {len(combined_df)} records read "
@@ -207,6 +218,6 @@ def run_pipeline(input_folder=INPUT_FOLDER, output_folder=OUTPUT_FOLDER):
         f"Total: {total}, Valid: {valid_count}, "
         f"Invalid: {invalid_count}"
     )
-    
+
 if __name__ == "__main__":
     run_pipeline()
