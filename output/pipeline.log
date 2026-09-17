@@ -1,0 +1,10 @@
+2026-09-17 17:47:41,137 - INFO - Pipeline started.
+2026-09-17 17:47:41,137 - INFO - Input folder: input
+2026-09-17 17:47:41,137 - INFO - Output folder: output
+2026-09-17 17:47:41,138 - INFO - Starting extraction.
+2026-09-17 17:47:41,163 - INFO - Extraction completed: 24 records read from 3 file(s).
+2026-09-17 17:47:41,164 - INFO - Starting validation.
+2026-09-17 17:47:41,171 - INFO - Validation completed.
+2026-09-17 17:47:41,172 - INFO - Starting output writing.
+2026-09-17 17:47:41,196 - INFO - Output files written successfully.
+2026-09-17 17:47:41,198 - INFO - Pipeline completed successfully. Total: 24, Valid: 10, Invalid: 14
