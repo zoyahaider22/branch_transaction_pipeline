@@ -360,27 +360,15 @@ Invalid records: 14
 
 ## Reflection
 
-During this project, I improved my understanding of ETL pipeline design,
-data validation, error handling, logging, and automated testing.
+During this project, I developed a better understanding of ETL pipeline design, data validation, error handling, logging, and automated testing. In Week 2, I tested the pipeline using different edge cases, including header-only files, missing columns, invalid amounts, impossible dates, and duplicate transaction IDs. These tests helped me identify problems and improve the pipeline without affecting the expected results of the original dataset.
 
-The Week 2 testing process helped identify issues related to header-only
-files and incorrectly formatted numeric values. These issues were fixed
-without changing the expected results of the original dataset.
+In Week 3, I focused on making the pipeline more organized, reusable, and easier to maintain. I separated validation logic into reusable functions and centralized configuration values in `config.py`. This helped reduce repeated code and made future changes easier. I also implemented logging to record pipeline execution, file-level errors, warnings, validation progress, and output generation.
 
-During Week 3, I focused on improving code organization and testability.
-Validation logic was separated into reusable functions, configuration values
-were centralized, and logging was added to provide evidence of pipeline
-execution.
+Another important learning experience was understanding how to handle errors without stopping the entire pipeline. When one input file contains a schema problem, the pipeline can record the error and continue processing other valid files. I also learned how to generate data-quality summaries containing file-level and row-level metrics, which provide useful information about pipeline performance and data reliability.
 
-I also learned the difference between unit testing and integration testing.
-Unit tests check individual functions, while integration tests verify that
-multiple pipeline components work together. Regression testing helps confirm
-that new changes do not break previously working behavior.
+I gained practical experience with unit testing, integration testing, and regression testing using `pytest`. Unit tests verify individual validation functions, integration tests check how multiple pipeline components work together, and regression tests ensure that new improvements do not break existing functionality.
 
-The project improved my understanding of how data-quality metrics and logs
-can help identify problems in a data-processing system. In the future, I
-would like to improve scalability, externalize configuration, and add
-stronger monitoring for production-style workflows.
+Overall, this project improved my problem-solving and debugging skills and helped me understand how reliable data pipelines are designed. In the future, I would like to improve scalability, externalize configuration, add stronger monitoring and alerting, and explore cloud-based data processing solutions.
 
 ## Author
 
