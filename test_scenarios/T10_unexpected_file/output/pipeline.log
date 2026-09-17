@@ -1,0 +1,10 @@
+2026-09-17 17:46:53,796 - INFO - Pipeline started.
+2026-09-17 17:46:53,797 - INFO - Input folder: test_scenarios\T10_unexpected_file\input
+2026-09-17 17:46:53,797 - INFO - Output folder: test_scenarios\T10_unexpected_file\output
+2026-09-17 17:46:53,800 - INFO - Starting extraction.
+2026-09-17 17:46:53,838 - INFO - Extraction completed: 24 records read from 3 file(s).
+2026-09-17 17:46:53,838 - INFO - Starting validation.
+2026-09-17 17:46:53,842 - INFO - Validation completed.
+2026-09-17 17:46:53,842 - INFO - Starting output writing.
+2026-09-17 17:46:53,858 - INFO - Output files written successfully.
+2026-09-17 17:46:53,858 - INFO - Pipeline completed successfully. Total: 24, Valid: 10, Invalid: 14
