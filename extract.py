@@ -16,15 +16,7 @@ import glob
 import os
 import pandas as pd
 
-REQUIRED_COLUMNS = [
-    "transaction_id",
-    "account_id",
-    "transaction_date",
-    "transaction_type",
-    "amount",
-    "currency",
-]
-
+from config import REQUIRED_COLUMNS, BRANCH_FILE_PATTERN
 
 def find_branch_files(input_folder):
     """
@@ -34,7 +26,7 @@ def find_branch_files(input_folder):
     Using a pattern instead of a fixed list of filenames is what lets
     the pipeline handle BR004, BR005, ... without any code changes.
     """
-    pattern = os.path.join(input_folder, "BR*_*_TRANSACTION.csv")
+    pattern = os.path.join(input_folder, BRANCH_FILE_PATTERN)
     files = sorted(glob.glob(pattern))
     return files
 
@@ -89,7 +81,7 @@ def extract_all(input_folder):
     if not files:
         raise FileNotFoundError(
             f"No branch transaction files found in '{input_folder}'. "
-            f"Expected files matching pattern BR*_*_TRANSACTION.csv"
+            f"Expected files matching pattern {BRANCH_FILE_PATTERN}"
         )
 
     all_dataframes = []

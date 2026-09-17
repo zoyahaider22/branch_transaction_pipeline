@@ -1,83 +1,148 @@
 """
 validate.py — the "Transform / Validate" stage of the pipeline.
 
-Each business rule is its own small function. A rule function takes
-the combined DataFrame and returns a pandas boolean Series that is
-True for rows that FAIL that rule, along with the human-readable
-reason text for that failure.
+Week 3 refactor: every rule's real logic now lives in a small function
+that takes ONE value and returns True/False — e.g. is_valid_amount("ABC")
+-> False. The original DataFrame-wide rule_* functions still exist and
+are still what pipeline.py actually calls, but they're now thin
+wrappers that apply the single-value function across a column with
+.apply(), instead of containing the logic themselves.
 
-Keeping rules as separate functions (rather than one big tangled
-if/else block) means:
-- every rule can be tested/read in isolation
-- adding, removing or tweaking one rule never risks breaking another
-- ALL rules run against every row, so a row breaking two rules gets
-  both reasons recorded (see validate_all below)
+Why this split matters: a function that takes one plain value and
+returns one plain answer is dramatically easier to unit test than one
+that needs a whole DataFrame to call — test_validation.py calls these
+single-value functions directly, with no DataFrame required at all.
+It also means the real logic exists in exactly ONE place: the
+DataFrame-wide version can never quietly drift out of sync with what
+gets tested, because it delegates to the exact same function.
+
+Each rule function still takes the combined DataFrame and returns a
+pandas boolean Series that is True for rows that FAIL that rule, along
+with the human-readable reason text for that failure — this part is
+unchanged, so validate_all() below still works exactly as before.
 """
+
+import re
+from datetime import datetime
 
 import pandas as pd
 
-VALID_TRANSACTION_TYPES = {"CREDIT", "DEBIT"}
-VALID_CURRENCY = "USD"
+from config import (
+    VALID_TRANSACTION_TYPES,
+    VALID_CURRENCY,
+    DATE_FORMAT,
+    DATE_STRICT_REGEX,
+    AMOUNT_STRICT_REGEX,
+)
 
+
+# ---------------------------------------------------------------------
+# Single-value functions — the real logic, testable in isolation.
+# ---------------------------------------------------------------------
+
+def is_missing_value(value):
+    """True if value is null/NaN, or an empty/whitespace-only string."""
+    if pd.isna(value):
+        return True
+    return str(value).strip() == ""
+
+
+def is_valid_date(value):
+    """
+    True only if value is a real calendar date in exact YYYY-MM-DD
+    format. Two separate checks are needed, not one:
+    - The regex enforces the exact SHAPE (4-2-2 digits with dashes),
+      because plain datetime parsing is lenient about digit padding —
+      Python's own datetime.strptime("2026-9-6", "%Y-%m-%d") happily
+      succeeds, even though "2026-9-6" is not actually in YYYY-MM-DD
+      format. This is true with or without pandas involved at all.
+    - The datetime parse itself catches genuinely impossible dates
+      that are correctly shaped but don't exist, like "2026-02-30".
+    """
+    if is_missing_value(value):
+        return False
+    value_str = str(value)
+    if not re.match(DATE_STRICT_REGEX, value_str):
+        return False
+    try:
+        datetime.strptime(value_str, DATE_FORMAT)
+        return True
+    except ValueError:
+        return False
+
+
+def is_valid_transaction_type(value):
+    return value in VALID_TRANSACTION_TYPES
+
+
+def is_valid_amount(value):
+    """
+    True only if value is present, shaped like a plain decimal number,
+    and greater than 0. The regex check comes first and rejects
+    anything not shaped like a plain number BEFORE trusting a parsed
+    value — this is what catches scientific notation like "1e10",
+    which Python's own float("1e10") would otherwise happily accept
+    as a legitimate positive number.
+    """
+    if is_missing_value(value):
+        return False
+    value_str = str(value)
+    if not re.match(AMOUNT_STRICT_REGEX, value_str):
+        return False
+    try:
+        numeric_value = float(value_str)
+    except (ValueError, TypeError):
+        return False
+    return numeric_value > 0
+
+
+def is_valid_currency(value):
+    return value == VALID_CURRENCY
+
+
+# ---------------------------------------------------------------------
+# DataFrame-wide rules — thin wrappers that apply the functions above
+# across a whole column. These are what pipeline.py actually calls.
+# ---------------------------------------------------------------------
 
 def rule_missing_transaction_id(df):
-    fails = df["transaction_id"].isna() | (df["transaction_id"].str.strip() == "")
+    fails = df["transaction_id"].apply(is_missing_value)
     return fails, "transaction_id is missing"
 
 
 def rule_missing_account_id(df):
-    fails = df["account_id"].isna() | (df["account_id"].str.strip() == "")
+    fails = df["account_id"].apply(is_missing_value)
     return fails, "account_id is missing"
 
 
 def rule_invalid_date(df):
-    # errors="coerce" turns anything that doesn't parse into a real
-    # calendar date (including the impossible "2026-13-06") into NaT.
-    parsed = pd.to_datetime(df["transaction_date"], format="%Y-%m-%d", errors="coerce")
-
-    # pd.to_datetime alone is lenient about digit padding — it will
-    # happily accept "2026-9-6" as a real date, even though that is
-    # NOT actually in YYYY-MM-DD format (month/day must be 2 digits).
-    # A regex check enforces the exact shape on top of the date check,
-    # so "2026-9-6" is correctly rejected even though it IS a real date.
-    strict_format = df["transaction_date"].astype(str).str.match(r"^\d{4}-\d{2}-\d{2}$")
-
-    fails = parsed.isna() | ~strict_format
+    fails = ~df["transaction_date"].apply(is_valid_date)
     return fails, "transaction_date must be a valid date in YYYY-MM-DD format"
 
 
 def rule_invalid_transaction_type(df):
-    fails = ~df["transaction_type"].isin(VALID_TRANSACTION_TYPES)
+    fails = ~df["transaction_type"].apply(is_valid_transaction_type)
     return fails, "transaction_type must be CREDIT or DEBIT"
 
 
 def rule_invalid_amount(df):
-    # Convert to numeric, forcing anything non-numeric (or blank) to NaN.
-    numeric_amount = pd.to_numeric(df["amount"], errors="coerce")
-
-    # pd.to_numeric is more lenient than a real bank amount field should
-    # be — it happily accepts scientific notation like "1e10" as a valid
-    # positive number, even though no real transaction amount is ever
-    # written that way. A regex enforces the raw text is actually shaped
-    # like a plain decimal number (digits, optional single decimal
-    # point) before the parsed value is trusted at all.
-    strict_format = df["amount"].astype(str).str.match(r"^\d+(\.\d+)?$")
-
-    fails = numeric_amount.isna() | (numeric_amount <= 0) | ~strict_format
+    fails = ~df["amount"].apply(is_valid_amount)
     return fails, "amount must be present, numeric, and greater than 0"
 
 
 def rule_invalid_currency(df):
-    fails = df["currency"] != VALID_CURRENCY
+    fails = ~df["currency"].apply(is_valid_currency)
     return fails, "currency must be USD"
 
 
 def rule_duplicate_transaction_id(df):
-    # Every occurrence of a transaction_id that appears more than once
-    # across the COMBINED dataset is marked invalid — including within
-    # a single file, but this is what specifically catches a duplicate
-    # that spans two different branch files (e.g. the same ID sent by
-    # two branches).
+    # This rule genuinely cannot be a single-value function — "is this
+    # value a duplicate?" is only answerable by looking at every OTHER
+    # row too, not one value in isolation. Every occurrence of a
+    # transaction_id that appears more than once across the COMBINED
+    # dataset is marked invalid — including within a single file, but
+    # this is what specifically catches a duplicate that spans two
+    # different branch files (e.g. the same ID sent by two branches).
     counts = df["transaction_id"].value_counts()
     duplicated_ids = counts[counts > 1].index
     fails = df["transaction_id"].isin(duplicated_ids)

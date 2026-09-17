@@ -1,88 +1,162 @@
 # Branch Transaction File Processing Pipeline
 
 A Python/Pandas ETL pipeline that reads daily bank branch transaction files,
-validates every record against the bank's business rules, and produces
-valid/invalid/summary outputs.
+validates records against business rules, and produces valid, invalid, and
+data-quality summary outputs.
 
-## How to run
+The pipeline also includes logging, reusable validation functions, automated
+tests, and handling for file-level and row-level errors.
 
-1. (Optional but recommended) Create and activate a virtual environment,
-   so this project's dependencies stay isolated from other Python projects
-   on your machine:
-   ```
-   python -m venv .venv
-   ```
-   Activate it — on Windows PowerShell:
-   ```
-   .venv\Scripts\Activate.ps1
-   ```
-   On Mac/Linux:
-   ```
-   source .venv/bin/activate
-   ```
-2. Install dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Place branch CSV files in the `input/` folder. Files must be named
-   following the pattern `BR<branch_number>_<date>_TRANSACTION.csv`
-   (e.g. `BR001_20260906_TRANSACTION.csv`) and contain the columns:
-   `transaction_id, account_id, transaction_date, transaction_type, amount, currency`.
-4. Run:
-   ```
-   python pipeline.py
-   ```
-5. Results appear in `output/`:
-   - `valid_transactions.csv` — records that passed every rule.
-   - `invalid_transactions.csv` — rejected records with an `error_reason`
-     column (multiple reasons for one row are separated by `; `).
-   - `summary.csv` — total/valid/invalid record counts, plus a per-branch
-     breakdown and a count of how many records failed each specific rule.
+## How to Run
 
-The pipeline automatically picks up any file in `input/` matching the
-`BR*_*_TRANSACTION.csv` pattern — adding a new branch file requires no
-code changes.
+### 1. Create a Virtual Environment (Optional)
 
-## Business rules applied
+Creating a virtual environment keeps project dependencies isolated.
 
-- All 6 required columns must be present in each file.
-- `transaction_id` and `account_id` must not be missing.
-- `transaction_date` must be a valid date in `YYYY-MM-DD` format.
-- `transaction_type` must be `CREDIT` or `DEBIT`.
-- `amount` must be present, numeric, and greater than 0.
-- `currency` must be `USD`.
-- `transaction_id` must be unique across all branch files combined; every
-  occurrence of a duplicated ID is treated as invalid.
-
-## File-level vs Row-level Errors
-
-The pipeline distinguishes between file-level/schema errors and
-row-level validation errors.
-
-File-level errors:
-- Missing required columns
-- The affected file is skipped and the error is reported in the
-  pipeline summary.
-
-Row-level errors:
-- Missing transaction_id
-- Missing account_id
-- Invalid transaction_date
-- Invalid transaction_type
-- Invalid amount
-- Invalid currency
-- Duplicate transaction_id
-
-Row-level errors are retained in invalid_transactions.csv with
-their corresponding error_reason. 
-
-## Project structure
-
+```bash
+python -m venv .venv
 ```
+
+Activate it on Windows PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+On Mac/Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+### 2. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Add Input Files
+
+Place branch transaction CSV files inside the `input/` folder.
+
+Files must follow this naming pattern:
+
+```text
+BR<branch_number>_<date>_TRANSACTION.csv
+```
+
+Example:
+
+```text
+BR001_20260906_TRANSACTION.csv
+```
+
+Each file must contain these required columns:
+
+```text
+transaction_id
+account_id
+transaction_date
+transaction_type
+amount
+currency
+```
+
+### 4. Run the Pipeline
+
+```bash
+python pipeline.py
+```
+
+### 5. View the Output
+
+The results are generated inside the `output/` folder:
+
+- `valid_transactions.csv`  
+  Records that passed all validation rules.
+
+- `invalid_transactions.csv`  
+  Rejected records containing an `error_reason` column. Multiple errors
+  for one record are separated by `; `.
+
+- `DQsummary.csv`  
+  Data-quality summary containing file-level and row-level metrics.
+
+- `pipeline.log`  
+  Execution logs, warnings, errors, and pipeline status information.
+
+The pipeline automatically discovers files matching:
+
+```text
+BR*_*_TRANSACTION.csv
+```
+
+Adding a new branch file does not require code changes.
+
+## Business Rules Applied
+
+- All six required columns must be present in each file.
+- `transaction_id` and `account_id` must not be missing.
+- `transaction_date` must follow the `YYYY-MM-DD` format and represent a
+  valid calendar date.
+- `transaction_type` must be either `CREDIT` or `DEBIT`.
+- `amount` must be present, formatted as a plain decimal number, and greater
+  than zero.
+- `currency` must be `USD`.
+- `transaction_id` must be unique across all combined branch files.
+- Every occurrence of a duplicated transaction ID is treated as invalid.
+
+## File-Level vs Row-Level Errors
+
+The pipeline distinguishes between file-level errors and row-level errors.
+
+### File-Level Errors
+
+Examples include:
+
+- Missing required columns.
+- Unreadable or malformed files.
+- No usable branch files available.
+
+Files with schema errors are skipped so that valid files can still be
+processed. File-level problems are recorded in the data-quality summary and
+pipeline log.
+
+### Row-Level Errors
+
+Examples include:
+
+- Missing `transaction_id`.
+- Missing `account_id`.
+- Invalid transaction date.
+- Invalid transaction type.
+- Invalid amount.
+- Invalid currency.
+- Duplicate transaction ID.
+
+Invalid records are retained in `invalid_transactions.csv` with an
+`error_reason` column. When a record violates multiple rules, all applicable
+reasons are recorded.
+
+## Project Structure
+
+```text
 Banking Data Project/
-├── input/                  # branch CSV files go here
-├── output/                 # generated outputs land here
-├── test_scenarios/         # Week 2 extension: isolated edge-case tests (see below)
+│
+├── input/                          # Input branch transaction CSV files
+│
+├── output/                         # Generated pipeline outputs
+│   ├── valid_transactions.csv
+│   ├── invalid_transactions.csv
+│   ├── DQsummary.csv
+│   └── pipeline.log
+│
+├── test/                           # Automated pytest tests
+│   ├── __init__.py
+│   ├── test_validation.py           # Unit tests for validation functions
+│   └── test_pipeline.py             # Integration and regression tests
+│
+├── test_scenarios/                 # Week 2 edge-case scenarios
 │   ├── T01_new_branch/
 │   ├── T02_header_only/
 │   ├── T03_missing_column/
@@ -93,80 +167,220 @@ Banking Data Project/
 │   ├── T08_different_column_order/
 │   ├── T09_rerun/
 │   └── T10_unexpected_file/
-├── extract.py               # Extract stage: file discovery + reading
-├── validate.py               # Transform/Validate stage: one function per rule
-├── pipeline.py                # orchestrates extract -> validate -> load
-├── run_test_scenario.py       # runs the pipeline against one test_scenarios/ folder
-├── requirements.txt
-├── Week_2_Test_Results_Template.xlsx   # filled-in test results and reflection
-└── README.md
+│
+├── extract.py                      # File discovery and reading
+├── validate.py                     # Data validation rules
+├── pipeline.py                     # ETL pipeline orchestration
+├── config.py                       # Centralized configuration
+├── run_test_scenario.py            # Runs individual test scenarios
+│
+├── requirements.txt                # Project dependencies
+├── Week_2_Test_Results_Template.xlsx
+└── README.md                       # Project documentation
 ```
 
-## Week 2 Extension: Testing & Strengthening the Pipeline
+## Main Components
 
-This extension stress-tests the pipeline above against 10 edge cases it
-hadn't been checked against before, to see whether it holds up under
-input that isn't clean — not just whether it runs on the original 3
-sample files.
+### `extract.py`
 
-Each test lives in its own folder under `test_scenarios/`, with its own
-`input/` and `output/`, completely isolated from the real pipeline's
-`input/`/`output/` above. Full results, expected vs. actual behavior,
-and reasoning for every test are recorded in
-`Week_2_Test_Results_Template.xlsx`.
+- Discovers matching branch transaction files.
+- Reads CSV files as strings to preserve the original input values.
+- Checks the required schema.
+- Tracks successfully read files, including files with zero data rows.
+- Reports file-level errors.
 
-### Running a test scenario
+### `validate.py`
 
+- Contains reusable validation functions.
+- Validates individual transaction fields.
+- Applies validation rules to the combined dataset.
+- Records multiple validation errors for the same row.
+- Checks duplicate transaction IDs across files.
+
+### `pipeline.py`
+
+- Coordinates the extraction, validation, and loading stages.
+- Creates output files.
+- Generates data-quality metrics.
+- Configures and writes execution logs.
+- Handles extraction and processing failures.
+
+### `config.py`
+
+Stores reusable configuration values, including:
+
+- Input and output folder names.
+- File-matching pattern.
+- Required columns.
+- Valid transaction types and currency.
+- Date and amount validation patterns.
+- Output file names.
+
+## Week 2 Testing and Strengthening
+
+The pipeline was tested against ten edge cases using separate folders under
+`test_scenarios/`.
+
+Each scenario contains its own input and output folders, keeping the tests
+isolated from the main pipeline folders.
+
+The test results and explanations are recorded in:
+
+```text
+Week_2_Test_Results_Template.xlsx
 ```
+
+### Running a Test Scenario
+
+```bash
 python run_test_scenario.py <scenario_folder_name>
 ```
 
-For example:
-```
+Example:
+
+```bash
 python run_test_scenario.py T01_new_branch
 ```
 
-This calls the exact same `pipeline.py` used for real data — no
-separate test-only code path — just pointed at a different
-input/output folder pair, so a test scenario can never affect or be
-affected by the real deliverable in `input/`/`output/`.
+Each scenario uses the same pipeline code with a different input and output
+folder.
 
-### What was tested
+### Week 2 Test Results
 
 | ID | Scenario | Result |
-|---|---|---|
+|----|----------|--------|
 | T01 | New branch file added | PASS |
-| T02 | Header-only file (valid headers, zero data rows) | FAIL → fixed → PASS |
-| T03 | File missing a required column entirely | PASS |
-| T04 | One transaction breaking multiple rules at once | PASS |
-| T05 | Same transaction_id duplicated across two branch files | PASS |
-| T06 | Non-numeric / oddly-formatted amount values | FAIL → fixed → PASS |
-| T07 | Dates that are correctly formatted but calendar-impossible | PASS |
-| T08 | Same columns, different order in the file | PASS |
-| T09 | Running the pipeline twice on identical input | PASS |
-| T10 | Unrelated files sitting in the input folder | PASS |
+| T02 | Header-only file | FAIL → fixed → PASS |
+| T03 | Missing required column | PASS |
+| T04 | Multiple errors in one transaction | PASS |
+| T05 | Cross-file duplicate transaction ID | PASS |
+| T06 | Non-numeric or incorrectly formatted amount | FAIL → fixed → PASS |
+| T07 | Impossible calendar date | PASS |
+| T08 | Different column order | PASS |
+| T09 | Pipeline rerun | PASS |
+| T10 | Unrelated file in input folder | PASS |
 
-### Bugs found and fixed
+## Week 3 Improvements
 
-**1. Empty branch files were invisible in reporting (T02).**
-A file with valid headers but zero data rows was processed without
-crashing, but `summary.csv` had no record that the file existed at
-all — making a branch that genuinely sent zero transactions
-indistinguishable from a branch whose file never arrived. Fixed by
-tracking every successfully-read file (with its row count, including
-0) in `extract_all()`, and using that list — instead of grouping the
-data itself — to build the per-branch summary in `pipeline.py`.
+The following improvements were added during Week 3:
 
-**2. Scientific notation was accepted as a valid amount (T06).**
-`pd.to_numeric()` parses a value like `"1e10"` as a legitimate
-positive number, even though no real transaction amount is ever
-written that way. Fixed by adding a regex check in
-`rule_invalid_amount()` (`validate.py`) requiring the raw value to be
-shaped like a plain decimal number before trusting the parsed result.
+- Refactored validation logic into reusable functions.
+- Added centralized configuration through `config.py`.
+- Added unit and integration tests using `pytest`.
+- Added pipeline logging with different log levels.
+- Added data-quality summary generation.
+- Added handling for missing files and rejected files.
+- Added tracking of files read, rejected, and processed.
+- Added support for recording multiple validation reasons.
+- Added test coverage for extraction, validation, integration, and regression.
 
-Both fixes were verified against the original 3-branch dataset
-afterward to confirm the real pipeline's output (24 total / 10 valid /
-14 invalid records) was unaffected.
+## Data-Quality Summary
+
+The `DQsummary.csv` file contains information such as:
+
+- Number of files discovered.
+- Number of files successfully read.
+- Number of rejected files.
+- Total input records.
+- Valid record count.
+- Invalid record count.
+- Rejection rate.
+- Duplicate transaction count.
+- Validation failure counts by rule.
+- Per-file row counts.
+- File-level error information.
+
+The summary helps identify data-quality issues and provides evidence of
+pipeline execution.
+
+## Logging
+
+The pipeline creates:
+
+```text
+output/pipeline.log
+```
+
+The log records:
+
+- Pipeline start and completion.
+- Input and output locations.
+- File discovery and extraction status.
+- File-level warnings and errors.
+- Validation progress.
+- Output generation.
+- Unexpected failures.
+
+The pipeline also handles situations such as:
+
+- No matching input files.
+- All discovered files being rejected.
+- One invalid file among valid files.
+- Missing or unusable input data.
+
+## Automated Testing
+
+The project uses `pytest` for automated testing.
+
+Run the test suite using:
+
+```bash
+py -m pytest -v
+```
+
+The tests cover:
+
+- Unit-level validation logic.
+- Extraction and validation integration.
+- Handling of rejected files.
+- Data-quality summary and log generation.
+- Regression testing against the original dataset.
+- Missing input files and all-files-rejected situations.
+
+The original dataset is expected to produce:
+
+```text
+Total records: 24
+Valid records: 10
+Invalid records: 14
+```
+
+## Known Limitations and Future Improvements
+
+- The pipeline currently processes CSV files from a local input directory.
+  Future improvements could include cloud storage or database integration.
+- Validation rules and configuration values are maintained in Python
+  configuration files. A future version could use an external configuration
+  file.
+- The pipeline currently uses Pandas and is designed for relatively
+  manageable file sizes. Large-scale processing could be considered in
+  a future implementation.
+- Additional monitoring and alerting could be added for repeated file
+  failures or abnormal data-quality metrics.
+
+## Reflection
+
+During this project, I improved my understanding of ETL pipeline design,
+data validation, error handling, logging, and automated testing.
+
+The Week 2 testing process helped identify issues related to header-only
+files and incorrectly formatted numeric values. These issues were fixed
+without changing the expected results of the original dataset.
+
+During Week 3, I focused on improving code organization and testability.
+Validation logic was separated into reusable functions, configuration values
+were centralized, and logging was added to provide evidence of pipeline
+execution.
+
+I also learned the difference between unit testing and integration testing.
+Unit tests check individual functions, while integration tests verify that
+multiple pipeline components work together. Regression testing helps confirm
+that new changes do not break previously working behavior.
+
+The project improved my understanding of how data-quality metrics and logs
+can help identify problems in a data-processing system. In the future, I
+would like to improve scalability, externalize configuration, and add
+stronger monitoring for production-style workflows.
 
 ## Author
 

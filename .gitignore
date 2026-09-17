@@ -1,3 +1,13 @@
+# Python cache
 __pycache__/
 *.pyc
+.pytest_cache/
 .venv/
+
+# Generated pipeline outputs
+output/*.csv
+output/pipeline.log
+
+# Generated test scenario outputs
+test_scenarios/*/output/*.csv
+test_scenarios/*/output/pipeline.log
